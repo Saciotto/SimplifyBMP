@@ -1,5 +1,4 @@
 #include "bmp.h"
-#include "portable_endian.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,19 +6,31 @@
 
 #define BMP_ID_WINDOWS 0x4d42 /* BM */
 
+static uint32_t readLittleEndian(const unsigned char *buf, size_t len)
+{
+    uint32_t ret = 0;
+    while (len-- > 0) {
+        ret <<= 8;
+        ret += (uint32_t) buf[len];
+    }
+    return ret;
+}
+
 static int readUint16(FILE *fp, uint16_t *value)
 {
-    size_t len = fread((void *) value, 1, sizeof(*value), fp);
-    if (len != sizeof(*value)) return BMP_FILE_ERROR;
-    *value = le16toh(*value);
+    unsigned char buf[2];
+    size_t len = fread(buf, 1, sizeof(buf), fp);
+    if (len != sizeof(buf)) return BMP_FILE_ERROR;
+    *value = (uint16_t) readLittleEndian(buf, sizeof(buf));
     return 0;
 }
 
 static int readUint32(FILE *fp, uint32_t *value)
 {
-    size_t len = fread((void *) value, 1, sizeof(*value), fp);
-    if (len != sizeof(*value)) return BMP_FILE_ERROR;
-    *value = le32toh(*value);
+    unsigned char buf[4];
+    size_t len = fread((void *) buf, 1, sizeof(buf), fp);
+    if (len != sizeof(buf)) return BMP_FILE_ERROR;
+    *value = readLittleEndian(buf, sizeof(buf));
     return 0;
 }
 
