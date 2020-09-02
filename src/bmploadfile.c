@@ -97,9 +97,9 @@ static int allocData(BMP *bmp)
 static int loadData(FILE *fp, BMP *bmp, uint32_t dataOffset)
 {
     int err;
-    size_t i, j, height, width, pos, offset, len, pixSize, rowSize;
+    size_t i, j, height, width, pos, offset, len, pixSize, rowSize, bmpRowSize;
     long int padding;
-    uint8_t *data;
+    char *data;
 
     err = fseek(fp, dataOffset, SEEK_SET);
     if (err) return BMP_FILE_ERROR;
@@ -112,16 +112,19 @@ static int loadData(FILE *fp, BMP *bmp, uint32_t dataOffset)
     offset = bmp->header.height > 0 ? height - 1 : 0;
     pixSize = bmp->header.depth / 8;
     rowSize = pixSize * width;
-    padding = (long int) (4 - pixSize);
+    bmpRowSize = rowSize;
+    while (bmpRowSize % 4)
+        bmpRowSize++;
+    padding = (long int) (bmpRowSize - rowSize);
 
     data = malloc(rowSize);
     if (data == NULL) return BMP_NO_MEMORY;
 
     for (i = 0; i < height; i++) {
-        uint8_t *pdata;
+        char *pdata;
 
-        len = fread((void *) data, pixSize, width, fp);
-        if (len != width) {
+        len = fread((void *) data, 1, rowSize, fp);
+        if (len != rowSize) {
             free(data);
             return BMP_FILE_ERROR;
         }
@@ -130,10 +133,10 @@ static int loadData(FILE *fp, BMP *bmp, uint32_t dataOffset)
         pos = offset > i ? offset - i : i - offset;
         for (j = 0; j < width; j++) {
             if (pixSize == 4) {
-                bmp->data[pos][j].a = *pdata++;
                 bmp->data[pos][j].r = *pdata++;
                 bmp->data[pos][j].g = *pdata++;
                 bmp->data[pos][j].b = *pdata++;
+                bmp->data[pos][j].a = *pdata++;
             } else if (pixSize == 3) {
                 bmp->data[pos][j].r = *pdata++;
                 bmp->data[pos][j].g = *pdata++;
@@ -142,10 +145,12 @@ static int loadData(FILE *fp, BMP *bmp, uint32_t dataOffset)
             }
         }
 
-        err = fseek(fp, padding, SEEK_CUR);
-        if (err) {
-            free(data);
-            return BMP_FILE_ERROR;
+        if (i + 1 < height) {
+            err = fseek(fp, padding, SEEK_CUR);
+            if (err) {
+                free(data);
+                return BMP_FILE_ERROR;
+            }
         }
     }
 

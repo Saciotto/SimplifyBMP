@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 static void calculateHeader(BMP *bmp, BMP_FORMAT format, uint32_t *offset, uint32_t *fileSize)
 {
@@ -26,12 +27,12 @@ static void calculateHeader(BMP *bmp, BMP_FORMAT format, uint32_t *offset, uint3
     bmp->header.width = (int32_t) width;
     bmp->header.height = (int32_t) height;
     bmp->header.planes = 1;
-    bmp->header.headerSize = 40;
+    bmp->header.headerSize = sizeof(bmp->header);
     bmp->header.compression = 0;
     bmp->header.clrUsed = 0;
     bmp->header.clrImportant = 0;
 
-    *offset = (uint32_t)(2L + 40);
+    *offset = (uint32_t)(14L + bmp->header.headerSize);
     *fileSize = (uint32_t)(*offset + (rowSize * height));
 }
 
@@ -58,7 +59,7 @@ static int saveHeader(FILE *fp, uint32_t offset, uint32_t fileSize)
 
 static int saveHeaderInfo(FILE *fp, BMP *bmp)
 {
-    size_t len = fwrite((void *) &bmp->header, 40, 1, fp);
+    size_t len = fwrite((void *) &bmp->header, bmp->header.headerSize, 1, fp);
     if (len != 1) return BMP_FILE_ERROR;
     return 0;
 }
@@ -75,9 +76,10 @@ static int saveData(FILE *fp, BMP *bmp, BMP_FORMAT format)
         rowSize++;
 
     dataRow = (unsigned char *) calloc(rowSize, 1);
+    if (dataRow == NULL) return BMP_NO_MEMORY;
 
     for (i = bmp->header.height - 1; i >= 0; i--) {
-
+        memset(dataRow, 0, rowSize);
         row = dataRow;
 
         for (j = 0; j < bmp->header.width; j++) {
