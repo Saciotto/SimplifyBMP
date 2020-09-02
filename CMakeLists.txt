@@ -11,5 +11,17 @@ target_compile_options(compiler_flags INTERFACE
     "$<${msvc_cxx}:$<BUILD_INTERFACE:-W3;-D_CRT_SECURE_NO_WARNINGS>>"
 )
 
-add_executable(simplify_bmp simplify_bmp.c bmpdispose.c bmploadfile.c bmpshowinfo.c bmpsavefile.c)
+add_executable(simplify_bmp src/simplify_bmp.c src/bmpdispose.c src/bmploadfile.c src/bmpshowinfo.c src/bmpsavefile.c)
 target_link_libraries(simplify_bmp compiler_flags)
+
+enable_testing()
+
+add_test(NAME 24bits_bmp 
+    COMMAND $<TARGET_FILE:simplify_bmp> mixrgb24.bmp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+
+add_test(NAME 32bits_bmp 
+    COMMAND $<TARGET_FILE:simplify_bmp> mixrgb32.bmp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
