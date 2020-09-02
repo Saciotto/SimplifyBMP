@@ -4,13 +4,11 @@
 #include <stdio.h>
 #include <malloc.h>
 
-#define BMP_ID_WINDOWS 0x4d42 /* BM */
-
 static uint32_t readLittleEndian(const unsigned char *buf, size_t len)
 {
     uint32_t ret = 0;
     while (len-- > 0) {
-        ret <<= 8;
+        ret *= 0x100;
         ret += (uint32_t) buf[len];
     }
     return ret;

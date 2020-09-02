@@ -8,6 +8,10 @@
 #define BMP_NO_MEMORY   -1001
 #define BMP_FILE_ERROR  -1002
 #define BMP_INVALID_BMP -1003
+#define BMP_INTERNAL    -1004
+
+// BMP file identifier
+#define BMP_ID_WINDOWS 0x4d42 /* BM */
 
 typedef enum { RGB_24, RGBA_32 } BMP_FORMAT;
 

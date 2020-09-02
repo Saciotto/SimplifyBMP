@@ -17,6 +17,9 @@ void ShowError(int err)
     case BMP_INVALID_BMP:
         fprintf(stderr, "Invalid Bitmap.\n");
         break;
+    case BMP_INTERNAL:
+        fprintf(stderr, "Internal fault.\n");
+        break;
     default:
         fprintf(stderr, "Defualt error.\n");
         break;

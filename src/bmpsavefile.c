@@ -4,6 +4,20 @@
 #include <stdio.h>
 #include <string.h>
 
+static int writeLittleEndian(FILE *fp, uint32_t value, size_t size)
+{
+    char buf[4];
+    memset(buf, 0, sizeof(buf));
+    if (size > sizeof(buf)) return BMP_INTERNAL;
+    for (size_t idx = 0; idx < size; idx++) {
+        buf[idx] = value % 0x100;
+        value /= 0x100;
+    }
+    size_t len = fwrite(buf, 1, size, fp);
+    if (len != size) return BMP_FILE_ERROR;
+    return 0;
+}
+
 static void calculateHeader(BMP *bmp, BMP_FORMAT format, uint32_t *offset, uint32_t *fileSize)
 {
     size_t rowSize, width, height, pixSize;
@@ -38,37 +52,65 @@ static void calculateHeader(BMP *bmp, BMP_FORMAT format, uint32_t *offset, uint3
 
 static int saveHeader(FILE *fp, uint32_t offset, uint32_t fileSize)
 {
-    size_t len;
-    const char id[] = "BM";
+    int err = writeLittleEndian(fp, BMP_ID_WINDOWS, sizeof(uint16_t));
+    if (err) return err;
 
-    len = fwrite((const void *) id, 1, 2, fp);
-    if (len != 2) return BMP_FILE_ERROR;
+    err = writeLittleEndian(fp, fileSize, sizeof(fileSize));
+    if (err) return err;
 
-    len = fwrite((const void *) &fileSize, 1, 4, fp);
-    if (len != 4) return BMP_FILE_ERROR;
+    // Not used
+    err = writeLittleEndian(fp, 0, sizeof(uint32_t));
+    if (err) return err;
 
-    const char notUsed[] = "\x00\x00\x00\x00";
-    len = fwrite((const void *) notUsed, 1, 4, fp);
-    if (len != 4) return BMP_FILE_ERROR;
-
-    len = fwrite((const void *) &offset, 1, 4, fp);
-    if (len != 4) return BMP_FILE_ERROR;
+    err = writeLittleEndian(fp, offset, sizeof(offset));
+    if (err) return err;
 
     return 0;
 }
 
 static int saveHeaderInfo(FILE *fp, BMP *bmp)
 {
-    size_t len = fwrite((void *) &bmp->header, bmp->header.headerSize, 1, fp);
-    if (len != 1) return BMP_FILE_ERROR;
+    int err = writeLittleEndian(fp, bmp->header.headerSize, sizeof(bmp->header.headerSize));
+    if (err) return err;
+
+    err = writeLittleEndian(fp, (uint32_t) bmp->header.width, sizeof(bmp->header.width));
+    if (err) return err;
+
+    err = writeLittleEndian(fp, (uint32_t) bmp->header.height, sizeof(bmp->header.height));
+    if (err) return err;
+
+    err = writeLittleEndian(fp, (uint32_t) bmp->header.planes, sizeof(bmp->header.planes));
+    if (err) return err;
+
+    err = writeLittleEndian(fp, (uint32_t) bmp->header.depth, sizeof(bmp->header.depth));
+    if (err) return err;
+
+    err = writeLittleEndian(fp, bmp->header.compression, sizeof(bmp->header.compression));
+    if (err) return err;
+
+    err = writeLittleEndian(fp, bmp->header.imageSize, sizeof(bmp->header.imageSize));
+    if (err) return err;
+
+    err = writeLittleEndian(fp, (uint32_t) bmp->header.hres, sizeof(bmp->header.hres));
+    if (err) return err;
+
+    err = writeLittleEndian(fp, (uint32_t) bmp->header.vres, sizeof(bmp->header.vres));
+    if (err) return err;
+
+    err = writeLittleEndian(fp, bmp->header.clrUsed, sizeof(bmp->header.clrUsed));
+    if (err) return err;
+
+    err = writeLittleEndian(fp, bmp->header.clrImportant, sizeof(bmp->header.clrImportant));
+    if (err) return err;
+
     return 0;
 }
 
 static unsigned char applyAlpha(uint8_t color, uint8_t alpha)
 {
     // Use white background.
-    if (alpha == 255) return (char) color;
-    return (char)(((float) color) * ((float) alpha) / 255 + 255 - alpha);
+    if (alpha == 255) return (unsigned char) color;
+    return (unsigned char) (((float) color) * ((float) alpha) / 255 + 255 - alpha);
 }
 
 static int saveData(FILE *fp, BMP *bmp, BMP_FORMAT format)
