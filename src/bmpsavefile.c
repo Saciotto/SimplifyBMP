@@ -64,6 +64,13 @@ static int saveHeaderInfo(FILE *fp, BMP *bmp)
     return 0;
 }
 
+static unsigned char applyAlpha(uint8_t color, uint8_t alpha)
+{
+    // Use white background.
+    if (alpha == 255) return (char) color;
+    return (char)(((float) color) * ((float) alpha) / 255 + 255 - alpha);
+}
+
 static int saveData(FILE *fp, BMP *bmp, BMP_FORMAT format)
 {
     int32_t i, j;
@@ -89,9 +96,9 @@ static int saveData(FILE *fp, BMP *bmp, BMP_FORMAT format)
                 *row++ = (unsigned char) bmp->data[i][j].b;
                 *row++ = (unsigned char) bmp->data[i][j].a;
             } else if (format == RGB_24) {
-                *row++ = (unsigned char) bmp->data[i][j].r;
-                *row++ = (unsigned char) bmp->data[i][j].g;
-                *row++ = (unsigned char) bmp->data[i][j].b;
+                *row++ = applyAlpha(bmp->data[i][j].r, bmp->data[i][j].a);
+                *row++ = applyAlpha(bmp->data[i][j].g, bmp->data[i][j].a);
+                *row++ = applyAlpha(bmp->data[i][j].b, bmp->data[i][j].a);
             }
         }
 

@@ -17,11 +17,26 @@ target_link_libraries(simplify_bmp compiler_flags)
 enable_testing()
 
 add_test(NAME 24bits_bmp 
-    COMMAND $<TARGET_FILE:simplify_bmp> mixrgb24.bmp
+    COMMAND $<TARGET_FILE:simplify_bmp> rgb24.bmp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
 
 add_test(NAME 32bits_bmp 
-    COMMAND $<TARGET_FILE:simplify_bmp> mixrgb32.bmp
+    COMMAND $<TARGET_FILE:simplify_bmp> rgb32.bmp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+
+add_test(NAME 2params 
+    COMMAND $<TARGET_FILE:simplify_bmp> first.bmp second.bmp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+
+add_test(NAME verbose 
+    COMMAND $<TARGET_FILE:simplify_bmp> -v verbose.bmp
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
+)
+
+add_test(NAME transparency 
+    COMMAND $<TARGET_FILE:simplify_bmp> transparency.bmp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests
 )
