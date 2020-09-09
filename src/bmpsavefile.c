@@ -45,9 +45,10 @@ static void calculateHeader(BMP *bmp, BMP_FORMAT format, uint32_t *offset, uint3
     bmp->header.compression = 0;
     bmp->header.clrUsed = 0;
     bmp->header.clrImportant = 0;
+    bmp->header.imageSize = rowSize * height;
 
     *offset = (uint32_t)(14L + bmp->header.headerSize);
-    *fileSize = (uint32_t)(*offset + (rowSize * height));
+    *fileSize = (uint32_t)(*offset + bmp->header.imageSize);
 }
 
 static int saveHeader(FILE *fp, uint32_t offset, uint32_t fileSize)
